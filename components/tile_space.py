@@ -1,5 +1,6 @@
 from collections.abc import MutableSequence
 from components.textures import TEXTURE_PROPERTIES, TEXTURE_DICTIONARY
+from pygame import rect
 
 class Tile:
   def __init__(self, atlas, x, y):
@@ -15,7 +16,7 @@ class Tile:
   def set_texture_name(self, texture_name=None):
     """texture_name comes from either texture_code_list or texture_dictionary"""
     if texture_name == None:
-      self.empty
+      self.empty()
       self.image = self.atlas.get_texture("empty")
     elif texture_name != "delete":
       try:
@@ -118,7 +119,7 @@ class TileSpace(MutableSequence):
         for y in range(self.tiling_size//8, last_tile[1] + self.tiling_size, self.tiling_size//2):
           draw.line(window, (255, 255, 255), (x, y), (x, y + self.tiling_size//4))
   
-  def collide_tile(self, x, y) -> Tile:
+  def collide_tile_point(self, x, y, return_indexes = False) -> Tile:
     if x >= 0:
       x_index = x//40
     else:
@@ -128,9 +129,40 @@ class TileSpace(MutableSequence):
     else:
       y_index = self.spaces[-1][-1].y*2
     try:
-      return self[x_index][y_index]
+      if return_indexes == False:
+        return self[x_index][y_index]
+      else:
+        return x_index, y_index
     except IndexError:
       return None
+    
+  def check_collidable(self, list_of_tiles):
+    if list_of_tiles != None:
+      tiles = [tile.collide_mode for tile in list_of_tiles]
+      return tiles
+    else:
+      print("out of bounds")
+  
+  def collide_tile_rect(self, rect:rect.Rect, return_indexes = False):
+    # get minimum tiles to be check
+    
+    # get corners (TL and BR) of rect
+    x1, y1 = self.collide_tile_point(rect.left, rect.top, return_indexes = True)
+    x2, y2 = self.collide_tile_point(rect.right, rect.bottom, return_indexes = True)
+    
+    # get tiles between corners
+    x_ranges = [x for x in range(x1, x2 + 1)]
+    y_ranges = [y for y in range(y1, y2 + 1)]
+    tile_indexes = [(x, y) for x in x_ranges for y in y_ranges]
+    
+    try:
+      if return_indexes == False:
+        return [self[x][y] for x, y in tile_indexes]
+      else:
+        return tile_indexes
+    except IndexError:
+      return None
+    
 
   def empty(self):
     for col in self:
