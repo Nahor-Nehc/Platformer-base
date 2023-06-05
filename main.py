@@ -39,12 +39,14 @@ PATH_TO_ATLAS_IMAGE = path.join("assets", "images", "atlas.bmp")
 PATH_TO_LEVELS = path.join("assets", "levels", "levels")
 
 # handles all updates to the window
-def draw(WIN, state, tile_space, debug_mode, texture_atlas, selected_texture, show_commands):
+def draw(WIN, state, tile_space, debug_mode, texture_atlas, selected_texture, show_commands, player):
   # create blank canvas
   WIN.fill(BLACK)
   
   # draws the tile_space
   tile_space.draw(WIN)
+  
+  player.draw(WIN)
   
   # extra tools for the dev
   if debug_mode == True:
@@ -102,9 +104,14 @@ def main():
   from components.state import State
   from components.textures import TextureAtlas
   from components.tile_space import TileSpace
+  from components.player import Player
   
   # GAME VARIABLES
   state = State("start")
+  
+  player_image = pygame.Surface((40, 40))
+  player_image.fill(GREEN)
+  player = Player(0, 0, player_image, 5, 1)
   
   # generates a tiling grid for the game
   tiling = [[(x, y) for y in range(0, HEIGHT, TILE_SIZE)] for x in range(0, WIDTH, TILE_SIZE)]
@@ -211,12 +218,19 @@ def main():
           
           elif event.key == pygame.K_SPACE:
             show_commands = not show_commands
-            
+          
+          # temp
+          elif event.key == pygame.K_t:
+            state.set_state("game")
+        
+        elif state.get_state() == "game":
+          if event.key == pygame.K_SPACE:
+            player.jump()
       
     if state.get_state() == "editor mode":
       mouse_inputs = pygame.mouse.get_pressed()
       if mouse_inputs[0]:
-        tile = tile_space.collide_tile(mouse[0], mouse[1])
+        tile = tile_space.collide_tile_point(mouse[0], mouse[1])
         if tile == None:
           pass
         elif selected_texture == "delete":
@@ -224,6 +238,9 @@ def main():
         else:
           tile(selected_texture)
     
-    draw(WIN, state, tile_space, debug_mode, texture_atlas, selected_texture, show_commands)
+    pressing = pygame.key.get_pressed()
+    player.update(pressing, state, tile_space)
+    
+    draw(WIN, state, tile_space, debug_mode, texture_atlas, selected_texture, show_commands, player)
 
 main()
