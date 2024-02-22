@@ -1,5 +1,5 @@
 from pygame import Surface, sprite
-from pygame import K_w, K_a, K_s, K_d, K_LEFT, K_RIGHT, K_UP, K_DOWN, Vector2
+from pygame import K_w, K_a, K_s, K_d, K_LEFT, K_RIGHT, K_UP, K_DOWN, K_SPACE, Vector2
 from math import sqrt
 
 class Movable(sprite.Sprite):
@@ -16,8 +16,6 @@ class Movable(sprite.Sprite):
 class Player(Movable):
   def __init__(self, x, y, image:Surface, speed = 5, gravity = 0.5, jump_power = 10):
     sprite.Sprite.__init__(self)
-    self.x = x
-    self.y = y
     self.max_speed = speed
     self.speed = speed
     self.image = image
@@ -62,10 +60,15 @@ class Player(Movable):
         movement.x -= 1
       if pressing[K_RIGHT]:
         movement.x += 1
+      if pressing[K_SPACE]:
+        self.try_jump()
       
     movement = self.normalise_movement(movement)
 
     return movement
+  
+  def try_jump(self):
+    ...
   
   def jump(self):
     self.jump_momentum.y = -1 * self.jump_power
@@ -73,7 +76,7 @@ class Player(Movable):
     if self.jump_momentum.y > -1 * self.jump_power:
       self.jump_momentum.y = -1 * self.jump_power
   
-  def update(self, keys_pressed, state, tile_space):
+  def update(self, keys_pressed, state, tile_space, width, height):
     """
     
     - check horizontal movement
@@ -86,15 +89,27 @@ class Player(Movable):
     # get all movement
     movement = self.add_speed(self.check_movement(keys_pressed, state))
     
-    # check horizontal movement
+    # apply horizontal movement
     self.move_x(movement.x)
+    
+    # check window bounds
+    if self.rect.left < 0:
+      self.rect.x = 0
+    if self.rect.right > width:
+      self.rect.x = width - self.rect.width
     
     if state.get_state() == "editor mode":
       # dont bother with collisions
       self.move_y(movement.y)
+      
+      # check window bounds
+      if self.rect.top < 0:
+        self.rect.y = 0
+      if self.rect.bottom > height:
+        self.rect.y = height - self.rect.height
     
     if state.get_state() == "game":
-      # check collisions
+      # check horizontal collisions
       
       soft_colliding_tiles = tile_space.collide_tile_rect(self.rect, False)
       
@@ -111,9 +126,10 @@ class Player(Movable):
             if self.rect.right < tile.rect.left:
               self.rect.right = tile.rect.left
         
+        # VERTICAL
         # calculate whether jump momentum is cancelled
         
-        soft_colliding_tiles = tile_space.collide_tile_rect(self.rect, False, always_return_values = False)
+        soft_colliding_tiles = tile_space.collide_tile_rect(self.rect, False)
         hard_colliding_tiles = tile_space.check_collidable(soft_colliding_tiles)
         
         if self.jump_momentum.y > 0:
@@ -139,7 +155,9 @@ class Player(Movable):
         self.move_y(movement.y)
         
         # post-movement, re-calculate collisions
-        soft_colliding_tiles = tile_space.collide_tile_rect(self.rect, False, always_return_values = False)
+        soft_colliding_tiles = tile_space.collide_tile_rect(self.rect, False)
+        print()
+        print(tile_space.collide_tile_rect(self.rect, False))
         print()
         print(f"Player rect (t, l, b, r): {self.rect.top}, {self.rect.right}, {self.rect.bottom}, {self.rect.left}")
         

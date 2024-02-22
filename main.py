@@ -1,5 +1,6 @@
 import pygame
 from components.gui import draw_around_surface
+from components.textures import SIZE
 
 pygame.mixer.pre_init(44100, 16, 2, 4096)
 pygame.init()
@@ -31,7 +32,7 @@ FONT = lambda x: pygame.font.SysFont("consolas.ttf", x)
 TITLEFONT = FONT(70)
 
 # tile property/ies
-TILE_SIZE = 40
+TILE_SIZE = SIZE
 
 # file locations
 from os import path
@@ -216,8 +217,9 @@ def main():
           elif event.key == pygame.K_e:
             selected_texture = "delete"
           
-          elif event.key == pygame.K_SPACE:
-            show_commands = not show_commands
+          # now handled by player.update()
+          # elif event.key == pygame.K_SPACE:
+          #   show_commands = not show_commands
           
           # temp
           elif event.key == pygame.K_t:
@@ -239,7 +241,7 @@ def main():
           tile(selected_texture)
     
     pressing = pygame.key.get_pressed()
-    player.update(pressing, state, tile_space)
+    player.update(pressing, state, tile_space, WIDTH, HEIGHT)
     
     draw(WIN, state, tile_space, debug_mode, texture_atlas, selected_texture, show_commands, player)
 

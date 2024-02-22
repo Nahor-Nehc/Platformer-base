@@ -1,6 +1,7 @@
 from collections.abc import MutableSequence
 from components.textures import TEXTURE_PROPERTIES, TEXTURE_DICTIONARY
 from pygame import rect
+from components.textures import SIZE as TILE_SIZE
 
 class Tile:
   def __init__(self, atlas, x, y):
@@ -127,22 +128,45 @@ class TileSpace(MutableSequence):
         for y in range(self.tiling_size//8, last_tile[1] + self.tiling_size, self.tiling_size//2):
           draw.line(window, (255, 255, 255), (x, y), (x, y + self.tiling_size//4))
   
-  def collide_tile_point(self, x, y, return_indexes = False):
-    if x >= 0:
-      x_index = x//40
-    else:
-      x_index = self.spaces[-1][-1].x*2
-    if y >= 0:
-      y_index = y//40
-    else:
-      y_index = self.spaces[-1][-1].y*2
-    try:
+  def collide_tile_point(self, x, y, return_indexes = False, ignore_index_errors = True):
+    """returns the indexes/tile of the tile the point (x, y) collides with the following error codes:
+    out of range - <neg|pos> <x|y>
+    """
+    
+    if ignore_index_errors:
+      x_index = x//TILE_SIZE
+      y_index = y//TILE_SIZE
+      
       if return_indexes == False:
         return self[x_index][y_index]
       else:
         return x_index, y_index
-    except IndexError:
-      return None
+    
+    else:
+      if x < 0:
+        return "out of range - neg x"
+
+      if y < 0:
+        return "out of range - neg y"
+      
+      x_index = x//TILE_SIZE
+      y_index = y//TILE_SIZE
+      
+      # test over index ranges:
+      
+      # x
+      try: self[x_index]
+      except IndexError: return "out of range - pos x"
+      
+      # y
+      try: self[y_index]
+      except IndexError: return "out of range - pos y"
+      
+      # returns indexes given no issues of range
+      if return_indexes == False:
+        return self[x_index][y_index]
+      else:
+        return x_index, y_index
     
   def check_collidable(self, list_of_tiles):
     if list_of_tiles != None:
@@ -151,37 +175,26 @@ class TileSpace(MutableSequence):
     else:
       print("out of bounds")
   
-  def collide_tile_rect(self, rect:rect.Rect, return_indexes = False, always_return_values = True):
+  def collide_tile_rect(self, rect:rect.Rect, return_indexes = False):
+    """
+    """
     # get minimum tiles to be checked
-    
-    # get corners (TL and BR) of rect
-    x1, y1 = self.collide_tile_point(rect.left, rect.top, return_indexes = True)
-    x2, y2 = self.collide_tile_point(rect.right, rect.bottom, return_indexes = True)
+
+    x1, y1 = self.collide_tile_point(rect.left, rect.top, return_indexes = True, ignore_index_errors = True)
+    x2, y2 = self.collide_tile_point(rect.right, rect.bottom, return_indexes = True, ignore_index_errors = True)
     
     # get tiles between corners
     x_ranges = [x for x in range(x1, x2 + 1)]
     y_ranges = [y for y in range(y1, y2 + 1)]
-    tile_indexes = [(x, y) for x in x_ranges for y in y_ranges]
+    tile_indexes = [(x, y) for x in x_ranges for y in y_ranges if self[-1][0].rect.right > x*TILE_SIZE > 0 and self[0][-1].rect.bottom > y*TILE_SIZE > 0]
     
-    if not always_return_values:
-      try:
-        if return_indexes == False:
-          return [self[x][y] for x, y in tile_indexes]
-        else:
-          return tile_indexes
-      except IndexError:
-        return None
-    
+    print()
+    print(self[-1][0].rect.right, self[0][-1].rect.bottom)
+    print(tile_indexes)
+    if return_indexes == False:
+      return [self[x][y] for x, y in tile_indexes]
     else:
-      l = []
-      for x, y in tile_indexes:
-        try:
-          l.append(self[x][y])
-          if return_indexes == True:
-            l[-1] = (x, y)
-        except IndexError:
-          pass
-        return l
+      return tile_indexes
     
   def empty(self):
     for col in self:
