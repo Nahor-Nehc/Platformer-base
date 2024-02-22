@@ -6,7 +6,7 @@ pygame.init()
 
 WIDTH, HEIGHT = 960, 560
 
-FPS = 30
+FPS = 60
 
 # general colours
 BLACK =  (  0,   0,   0)
@@ -111,7 +111,7 @@ def main():
   
   player_image = pygame.Surface((40, 40))
   player_image.fill(GREEN)
-  player = Player(0, 0, player_image, 5, 1)
+  player = Player(0, 0, player_image)
   
   # generates a tiling grid for the game
   tiling = [[(x, y) for y in range(0, HEIGHT, TILE_SIZE)] for x in range(0, WIDTH, TILE_SIZE)]
