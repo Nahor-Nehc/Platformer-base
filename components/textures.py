@@ -16,7 +16,7 @@ TEXTURE_DICTIONARY = {
   "empty":(0, SIZE),
 }
 
-# properties: ["collide/no collide", ]
+# properties: ["collide/no collide : 1/0"]
 wall_properties = [1]
 
 TEXTURE_PROPERTIES = {
